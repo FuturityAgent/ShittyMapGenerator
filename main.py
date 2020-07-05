@@ -27,50 +27,22 @@ class City:
 		self.capital_y = y
 		self.border_range = 3
 
-class MainGame:
-	def __init__(self, seed):
-		pygame.init()
-		self.width = WINDOW_SIZE[0]//TILE_WIDTH
-		self.height = WINDOW_SIZE[1]//TILE_HEIGHT
-		self.map_type = 'continents'
-		if len(sys.argv) > 1:
-			self.map_type = sys.argv[1]
+
+class MapGenerator:
+	def __init__(self, width: int, height: int, map_type: str, seed=42):
+		self.width = width
+		self.height = height
+		self.map_type = map_type
 		self._tiles = []
 		self._cities = []
 		self._resources = []
-		self.clock = pygame.time.Clock()
-		self.font = pygame.font.Font('freesansbold.ttf', 14)
-		self.display = pygame.display.set_mode(WINDOW_SIZE)
-		self.canvas = pygame.Surface(self.display.get_size(), pygame.SRCALPHA).convert()
-		self.canvas.fill((0, 0, 0))
-		pygame.display.set_caption("World Map")
-		self.generate_map(seed)
+		assert isinstance(seed, int), "Seed must be an integer!"
+		self.seed = seed
 
-	def run(self):
-		while True:
-			for event in pygame.event.get():
-				if event.type == pygame.QUIT:
-					pygame.quit()
-					sys.exit()
-			self.draw_map()
-			pygame.display.update()
-			self.clock.tick(1)
-
-	def place_seeds(self, seed: int):
-		seeds = set()
-		while len(seeds) < seed:
-			new_x = random.randrange(2, self.width-2)
-			new_y = random.randrange(2, self.height-2)
-			seed_nearby = any([distance((new_x, new_y), point) < 5 for point in seeds])
-			if not seed_nearby:
-				seeds.add((new_x, new_y))
-
-		return list(seeds)
-
-	def generate_map(self, seed: int):
+	def generate(self):
 		sea_tile = TILE_TYPES.get('water')
 		land_tile = TILE_TYPES.get('land')
-		seeds = self.place_seeds(seed)
+		seeds = self.place_seeds()
 		for x in range(self.width):
 			new_row = list()
 			for y in range(self.height):
@@ -82,6 +54,18 @@ class MainGame:
 		self.clear_glitches()
 		self.place_resources()
 		self.place_states(6)
+		return {'tiles': self._tiles, 'cities': self._cities, 'resources': self._resources}
+
+	def place_seeds(self):
+		seeds = set()
+		while len(seeds) < self.seed:
+			new_x = random.randrange(2, self.width - 2)
+			new_y = random.randrange(2, self.height - 2)
+			seed_nearby = any([distance((new_x, new_y), point) < 5 for point in seeds])
+			if not seed_nearby:
+				seeds.add((new_x, new_y))
+
+		return list(seeds)
 
 	def generate_continents(self):
 		treshold = MAP_TYPE.get(self.map_type, 0.5)
@@ -128,7 +112,6 @@ class MainGame:
 				self._resources.append(new_resource)
 				n -= 1
 
-
 	def get_land_chunk(self, x, y):
 		direction_id = random.randint(1, 8)
 		neighbours = None
@@ -167,6 +150,45 @@ class MainGame:
 				new_city = City(f"City#{n}", state_x, state_y)
 				self._cities.append(new_city)
 				n -= 1
+
+class MainGame:
+	def __init__(self, seed: int):
+		pygame.init()
+		self.width = WINDOW_SIZE[0]//TILE_WIDTH
+		self.height = WINDOW_SIZE[1]//TILE_HEIGHT
+		self.map_type = 'continents'
+		if len(sys.argv) > 1:
+			self.map_type = sys.argv[1]
+		# self._tiles = []
+		# self._cities = []
+		# self._resources = []
+		self.clock = pygame.time.Clock()
+		self.font = pygame.font.Font('freesansbold.ttf', 14)
+		self.display = pygame.display.set_mode(WINDOW_SIZE)
+		self.canvas = pygame.Surface(self.display.get_size(), pygame.SRCALPHA).convert()
+		self.canvas.fill((0, 0, 0))
+		pygame.display.set_caption("World Map")
+		self.map_generator = MapGenerator(self.width, self.height, self.map_type ,seed)
+		generated_data = self.map_generator.generate()
+		self._tiles = generated_data.get('tiles', [])
+		self._cities = generated_data.get('cities', [])
+		self._resources = generated_data.get('resources', [])
+
+	def run(self):
+		while True:
+			for event in pygame.event.get():
+				if event.type == pygame.QUIT:
+					pygame.quit()
+					sys.exit()
+			self.draw_map()
+			pygame.display.update()
+			self.clock.tick(1)
+
+	def get_neighbours(self, x, y, r=1):
+		"""Helper function only"""
+		rows = self._tiles[abs(x - r): abs(x + (r+1))]
+		neighbours = [cell for row in rows for cell in row[abs(y - r): abs(y + (r+1))]]
+		return neighbours
 
 	def draw_map(self):
 		self.display.blit(self.canvas, (0, 0))
