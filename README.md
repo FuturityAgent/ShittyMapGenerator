@@ -1,4 +1,4 @@
-### Description \n
+### Description
 This map generator was made just out of boredom. It will not have any usages.
 
 ### Usage
