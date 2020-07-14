@@ -14,8 +14,8 @@ def distance(a: tuple, b: tuple):
 MAP_TYPE = {
 	'islands': 0.60,
 	'archipelagos': 0.55,
-	'continents': 0.5,
-	'pangea': 0.4,
+	'continents': 0.52,
+	'pangea': 0.45,
 }
 
 LAND_BIOMS = ['desert', 'snow' ,'plain', 'forest']
@@ -77,7 +77,6 @@ class MapGenerator:
 						self.change_neighbours(tile.x, tile.y, r=1)
 
 	def generate_bioms(self):
-		import pdb
 		for x, row in enumerate(self._tiles):
 			weights = [0.1, 0.0, 0.3, 0.6]
 
@@ -194,8 +193,6 @@ class MainGame:
 		self.display.blit(self.canvas, (0, 0))
 		for x, row in enumerate(self._tiles):
 			for y, cell in enumerate(row):
-				# cell.surf.fill(cell.type.color)
-				# self.canvas.blit(cell.surf, (cell.x * TILE_WIDTH, cell.y * TILE_HEIGHT))
 				pygame.draw.rect(self.display, cell.type.color , (x*TILE_WIDTH, y*TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT ))
 		import pdb
 		for resource in self._resources:
@@ -209,13 +206,9 @@ class MainGame:
 													  (res_x * TILE_WIDTH, res_y * TILE_HEIGHT - 3 * TILE_HEIGHT-2)), 2)
 
 		for city in self._cities:
-			print(city.name, city.capital_x, city.capital_y)
-			# pdb.set_trace()
 			city_color = COLORS.get('black')
 			city_borders = [t for t in self.get_neighbours(city.capital_x, city.capital_y, r=city.border_range) if t.type.name != 'water']
 			for tile in city_borders:
-				# tile.surf.fill(city_color, None)
-				# self.canvas.blit(tile.surf, (tile.x * TILE_WIDTH, tile.y * TILE_HEIGHT))
 				pygame.draw.rect(self.display, city_color, (
 				tile.x * TILE_WIDTH, tile.y * TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT), 1)
 			text = self.font.render(city.name, True, COLORS.get('white'), COLORS.get('black'))
