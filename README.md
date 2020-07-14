@@ -1,7 +1,7 @@
-###Description
+### Description \n
 This map generator was made just out of boredom. It will not have any usages.
 
-###Usage
+### Usage
 ```python
     python main.py <map_type>
 ```
